@@ -116,7 +116,25 @@ async def route(message: Message, state: FSMContext):
     )
     await message.answer(text3, parse_mode="html")
 
-# @router.callback_query(F.data == "cargo/3/no")
-# async def route(callback: CallbackQuery):
-#     text = "Принято! поехали дальше"
-#     await callback.message.answer(text, reply_markup=keyboards.cargo4)
+
+@router.callback_query(lambda c: c.data in ["cargo/3/no", "cargo/4/no"])
+async def route(callback: CallbackQuery):
+    text1 = (
+        "Обрешетка - 150 юаней за квадратный метр груза. Обрешетка считается от 2 квадратных метров "
+        "(то есть ее минимальная стоимость - 300 юаней).\n\n"
+        "<b>Обрешетка груза</b> – это метод упаковки, при котором груз закрепляется внутри деревянного каркаса "
+        "<i>(обрешетки)</i>, чтобы обеспечить его безопасность во время транспортировки.\nОбрешетка используется "
+        "для защиты хрупких, тяжелых или негабаритных грузов от повреждений, воздействий внешней среды "
+        "и механических нагрузок.\n\n"
+    )
+
+    await callback.message.answer(text1, parse_mode="html")
+
+    text2 = "<b>Скотч</b> - дополнительно заскотчить коробку сверху - 10 юаней / коробка.\n\n"
+    await callback.message.answer(text2, parse_mode="html")
+
+    text3 = (
+        "Дополнительную упаковку мы делаем только по просьбе клиента.\n\nЕсли от Вас не было просьбы и при "
+        "транспортировке ваш груз сломался, помялся, разбился, претензии мы не принимаем.\n\n<b>Что делаем?</b>"
+    )
+    await callback.message.answer(text3, parse_mode="html")
