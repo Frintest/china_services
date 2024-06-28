@@ -13,6 +13,7 @@ router = Router()
 class Cargo(StatesGroup):
     price = State()
     price_per_kilogram = State()
+    package = State()
 
 
 @router.message(Command("start"))
@@ -50,7 +51,6 @@ async def route(callback: CallbackQuery):
         "Ну что ж, давай рассчитаем стоимость доставки. Тариф зависит от категории товара, "
         "количества килограмм, плотности груза. Также возможны дополнительные издержки"
     )
-
     await callback.message.answer(text, reply_markup=keyboards.cargo2)
 
 
@@ -65,7 +65,6 @@ async def route(callback: CallbackQuery):
         "<b>5.</b> Если ваш товар не застрахован, то стоимость груза не компенсируется.\n\n"
         "<strong>Делаем страховку?</strong>"
     )
-
     await callback.message.answer(text, reply_markup=keyboards.cargo3, parse_mode="html")
 
 
@@ -104,7 +103,6 @@ async def route(message: Message, state: FSMContext):
         "для защиты хрупких, тяжелых или негабаритных грузов от повреждений, воздействий внешней среды "
         "и механических нагрузок.\n\n"
     )
-
     await message.answer(text1, parse_mode="html")
 
     text2 = "<b>Скотч</b> - дополнительно заскотчить коробку сверху - 10 юаней / коробка.\n\n"
@@ -114,7 +112,7 @@ async def route(message: Message, state: FSMContext):
         "Дополнительную упаковку мы делаем только по просьбе клиента.\n\nЕсли от Вас не было просьбы и при "
         "транспортировке ваш груз сломался, помялся, разбился, претензии мы не принимаем.\n\n<b>Что делаем?</b>"
     )
-    await message.answer(text3, parse_mode="html")
+    await message.answer(text3, parse_mode="html", reply_markup=keyboards.cargo5)
 
 
 @router.callback_query(lambda c: c.data in ["cargo/3/no", "cargo/4/no"])
@@ -137,4 +135,14 @@ async def route(callback: CallbackQuery):
         "Дополнительную упаковку мы делаем только по просьбе клиента.\n\nЕсли от Вас не было просьбы и при "
         "транспортировке ваш груз сломался, помялся, разбился, претензии мы не принимаем.\n\n<b>Что делаем?</b>"
     )
-    await callback.message.answer(text3, parse_mode="html")
+    await callback.message.answer(text3, parse_mode="html", reply_markup=keyboards.cargo5)
+
+
+@router.callback_query(lambda c: c.data in ["cargo/5/box", "cargo/5/scotch", "cargo/5/also"])
+async def route(callback: CallbackQuery):
+    text = (
+        "С какой категорией товара работаем?\n\nВнимание!!! товары разных типов смешивать нельзя!\nТовары разных "
+        "типов считаются отдельно!\nМы не несем ответственность за сохранность товара, если была указаны "
+        "неверная категория или товары из разных категорий были смешаны!"
+    )
+    await callback.message.answer(text, parse_mode="html")

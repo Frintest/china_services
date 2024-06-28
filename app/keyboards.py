@@ -25,6 +25,12 @@ cargo4 = InlineKeyboardMarkup(inline_keyboard=[[
     InlineKeyboardButton(text="Нет", callback_data="cargo/4/no"),
 ]])
 
-cargo5 = InlineKeyboardMarkup(inline_keyboard=[[
-    InlineKeyboardButton(text="Принято! поехали дальше", callback_data="cargo/5/ok"),
-]])
+cargo5 = InlineKeyboardMarkup(inline_keyboard=[
+    [
+        InlineKeyboardButton(text="Делаем обрешетку", callback_data="cargo/5/box"),
+        InlineKeyboardButton(text="Делаем доп. скотч", callback_data="cargo/5/scotch")
+    ],
+    [
+        InlineKeyboardButton(text="Не делаем доп. упаковку", callback_data="cargo/5/null"),
+    ]
+])
