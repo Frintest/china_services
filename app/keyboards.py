@@ -34,3 +34,7 @@ cargo5 = InlineKeyboardMarkup(inline_keyboard=[
         InlineKeyboardButton(text="Не делаем доп. упаковку", callback_data="cargo/5/null"),
     ]
 ])
+
+cargo6 = InlineKeyboardMarkup(inline_keyboard=[[
+    InlineKeyboardButton(text="Я не уверен, помогите!", callback_data="cargo/6/help"),
+]])
