@@ -4,6 +4,9 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 import app.keyboards as keyboards
+from pycbrf.toolbox import ExchangeRates
+import datetime
+from bot import bot
 
 from services.buyer.index import buyer
 
@@ -66,7 +69,6 @@ async def route(callback: CallbackQuery):
 
 @router.callback_query(F.data == "retail/2/price")
 async def route(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(Retail.expected_price)
     text = (
         '<b>Введите сумму планируемой покупки (в юанях)</b>.\nПример: стоимость товара 150 ¥, значит вам нужно '
         'отправить сообщение "150". Далее бот рассчитает конечную стоимость с % 🙌'
@@ -78,7 +80,17 @@ async def route(callback: CallbackQuery, state: FSMContext):
 @router.message(Retail.expected_price)
 async def route(message: Message, state: FSMContext):
     await state.update_data(expected_price=message.text)
-    text = f"Стоимость товара <i>(без доставки)</i>: {2222} ₽"
+
+    date = datetime.datetime.now()
+    date = date.strftime("%Y-%m-%d")
+    rates = ExchangeRates(date)
+    cny = float(rates["CNY"].value)
+
+    retail = await state.get_data()
+    price = float(retail["expected_price"])
+    price = price * cny
+
+    text = f"Стоимость товара <i>(без доставки)</i>: {price} ₽"
     await message.answer(text, reply_markup=keyboards.retail3, parse_mode="html")
 
 
@@ -136,7 +148,7 @@ async def route(message: Message):
         "При самовыкупе вы <b>САМОСТОЯТЕЛЬНО</b> покупаете товары у китайских поставщиков или на китайских "
         "маркетплейсах (1688, Made-In-China, taobao, pingduoduo и тд) и организуете доставку груза до склада карго "
         "в г Иу или  Гуанчжоу (на выбор)."
-        "\n\nРешение ВСЕХ вопросов с продавцом (почему ваш товар еще не отправлен / еще не доехал /"
+        "\n\nРешение ВСЕХ вопросов с продавцом (почему ваш товар еще не отправлен / еще не доехал / "
         "вернулся обратно к продавцу и тд) лежит полностью на вашей стороне."
         "\n\nСо своей стороны мы отвечаем только за доставку груза из Китая до РФ."
         "\n\n<b>Продолжаем?</b>"
@@ -148,7 +160,7 @@ async def route(message: Message):
 async def route(callback: CallbackQuery):
     text = (
         "Ну что ж, давай рассчитаем стоимость доставки. Тариф зависит от категории товара, "
-        "количества килограмм, плотности груза. Также возможны дополнительные издержки"
+        "количества килограмм, плотности груза. Также возможны дополнительные издержки."
     )
     await callback.message.answer(text, reply_markup=keyboards.cargo2)
 
@@ -189,10 +201,11 @@ async def route(message: Message, state: FSMContext):
 @router.message(Cargo.price_per_kilogram)
 async def route(message: Message, state: FSMContext):
     await state.update_data(price_per_kilogram=message.text)
-    await state.set_state(Cargo.price_per_kilogram)
 
-    # data = await state.get_data()  #
-    # await state.clear()  #
+    # await state.set_state(Cargo.price_per_kilogram)
+
+    # data = await state.get_data()
+    # await state.clear()
 
     text1 = (
         "Обрешетка - 150 юаней за квадратный метр груза. Обрешетка считается от 2 квадратных метров "
@@ -237,7 +250,7 @@ async def route(callback: CallbackQuery):
     await callback.message.answer(text3, parse_mode="html", reply_markup=keyboards.cargo5)
 
 
-@router.callback_query(lambda c: c.data in ["cargo/5/box", "cargo/5/scotch", "cargo/5/also"])
+@router.callback_query(lambda c: c.data in ["cargo/5/box", "cargo/5/scotch", "cargo/5/null"])
 async def route(callback: CallbackQuery):
     text = (
         "С какой категорией товара работаем?\n\nВнимание!!! товары разных типов смешивать нельзя!\nТовары разных "
@@ -354,18 +367,31 @@ async def route(callback: CallbackQuery):
 @router.callback_query(F.data == "cargo/6/help")
 async def route(callback: CallbackQuery, state: FSMContext):
     text = "Пожалуйста, опиши товары, которые нужно доставить."
-    await state.set_state(Help.text)
     await callback.message.answer(text, parse_mode="html")
+    await state.set_state(Help.text)
 
 
 @router.message(Help.text)
 async def route(message: Message, state: FSMContext):
     await state.update_data(text=message.text)
-    await state.set_state(Help.contact)
     await message.answer("Как с тобой лучше связаться?")
+    await state.set_state(Help.contact)
 
 
 @router.message(Help.contact)
-async def route(message: Message):
-    text = "Спасибо! мы вернемся с ответом в ближайшее время!"
-    await message.answer(text)
+async def route(message: Message, state: FSMContext):
+    await state.update_data(contact=message.text)
+    await message.answer("Спасибо! мы вернемся с ответом в ближайшее время!")
+
+    chat_id = -1002216159300
+    user_id = message.from_user.url
+    help_state = await state.get_data()
+    text = help_state["text"]
+    contact = help_state["contact"]
+
+    text = (
+        f"Ник пользователя: <a href='{user_id}'>Перейти по ссылке</a>\n"
+        f"Товары, которые нужно доставить: {text}\n"
+        f"Контакты: {contact}"
+    )
+    await bot.send_message(chat_id=chat_id, text=text, parse_mode="html")

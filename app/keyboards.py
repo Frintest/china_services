@@ -57,3 +57,4 @@ retail3 = InlineKeyboardMarkup(inline_keyboard=[
 retail4 = InlineKeyboardMarkup(inline_keyboard=[[
     InlineKeyboardButton(text="КАК ПРИСЛАТЬ ССЫЛКУ?", callback_data="retail/4/link"),
 ]])
+
